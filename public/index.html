@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>WhatsBusiness</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fafbfc;--surface:#ffffff;--surface-alt:#f5f6f8;--border:#e8eaed;
+  --text:#1a1d21;--text-secondary:#6b7280;--text-tertiary:#9ca3af;
+  --primary:#4f46e5;--primary-hover:#4338ca;--primary-light:#eef2ff;
+  --success:#059669;--success-light:#ecfdf5;--danger:#dc2626;--danger-light:#fef2f2;
+  --warning:#d97706;--warning-light:#fffbeb;--info:#2563eb;--info-light:#eff6ff;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-lg:0 4px 12px rgba(0,0,0,.1);
+  --terminal-bg:#1a1d21;--terminal-text:#a3a3a3;--terminal-ts:#525252;
+}
+[data-theme="dark"]{
+  --bg:#0f1117;--surface:#1a1d27;--surface-alt:#232733;--border:#2e3345;
+  --text:#e4e6eb;--text-secondary:#9ca3b0;--text-tertiary:#6b7280;
+  --primary:#818cf8;--primary-hover:#6366f1;--primary-light:#1e1b4b;
+  --success:#34d399;--success-light:#064e3b;--danger:#f87171;--danger-light:#450a0a;
+  --warning:#fbbf24;--warning-light:#451a03;--info:#60a5fa;--info-light:#172554;
+  --shadow:0 1px 3px rgba(0,0,0,.3);--shadow-lg:0 4px 12px rgba(0,0,0,.4);
+  --terminal-bg:#0d1117;--terminal-text:#8b949e;--terminal-ts:#6e7681;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+.sidebar{position:fixed;left:0;top:0;width:200px;height:100vh;background:var(--surface);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;z-index:100;transition:background .2s,border-color .2s}
+.sidebar-brand{font-size:13px;font-weight:700;color:var(--primary);letter-spacing:-.02em;padding:0 8px 20px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.sidebar nav{flex:1;display:flex;flex-direction:column;gap:2px}
+.sidebar a{display:flex;align-items:center;gap:10px;padding:8px 12px;color:var(--text-secondary);text-decoration:none;border-radius:var(--radius);font-size:13px;font-weight:500;transition:all .15s}
+.sidebar a:hover{background:var(--surface-alt);color:var(--text)}
+.sidebar a.active{background:var(--primary-light);color:var(--primary);font-weight:600}
+.sidebar a .icon{font-size:15px;width:20px;text-align:center}
+.sidebar-footer{padding:12px 8px 0;border-top:1px solid var(--border);margin-top:8px}
+.theme-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text-secondary);transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.theme-toggle:hover{background:var(--surface-alt);color:var(--text)}
+.theme-toggle .icon{font-size:15px;width:20px;text-align:center}
+.main{margin-left:200px;padding:24px 32px;min-height:100vh;transition:background .2s}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.header h1{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.header-actions{display:flex;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;transition:background .2s,border-color .2s}
+.stat-card .value{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.03em}
+.stat-card .label{font-size:12px;color:var(--text-secondary);margin-top:2px;font-weight:500}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;transition:background .2s,border-color .2s}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-header h3{font-size:14px;font-weight:600;color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--text-secondary);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--surface-alt)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface-alt)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600}
+.badge-success{background:var(--success-light);color:var(--success)}
+.badge-warning{background:var(--warning-light);color:var(--warning)}
+.badge-danger{background:var(--danger-light);color:var(--danger)}
+.badge-info{background:var(--info-light);color:var(--info)}
+.badge-neutral{background:var(--surface-alt);color:var(--text-secondary)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--surface-alt);border-color:var(--border)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-danger:hover{opacity:.85}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+.btn-warning{background:var(--warning);color:#fff;border-color:var(--warning)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-tertiary)}
+.empty-state .icon{font-size:32px;margin-bottom:8px}
+.empty-state p{font-size:13px}
+input,select,textarea{width:100%;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;font-family:inherit;transition:border-color .15s,background .2s,color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+.flex{display:flex;gap:10px}
+.form-group{margin-bottom:14px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;z-index:200;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:480px;max-width:90%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal h3{font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px}
+.close-btn{float:right;background:none;border:none;color:var(--text-tertiary);font-size:18px;cursor:pointer;padding:4px;border-radius:4px}
+.close-btn:hover{background:var(--surface-alt);color:var(--text)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--radius);font-size:13px;display:none;z-index:300;box-shadow:var(--shadow-lg)}
+.toast.error{background:var(--danger);color:#fff}
+.tab-bar{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab-btn{padding:8px 16px;border:none;border-bottom:2px solid transparent;background:none;color:var(--text-tertiary);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-btn:hover:not(.active){color:var(--text-secondary)}
+.config-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.config-section:last-child{border-bottom:none}
+.config-section h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em}
+.config-row{display:flex;gap:12px;align-items:flex-end;margin-bottom:10px}
+.config-field{flex:1}
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:20px;transition:.2s}
+.toggle-slider:before{content:"";position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle-switch input:checked+.toggle-slider{background:var(--primary)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(16px)}
+.json-editor{width:100%;min-height:300px;padding:12px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);color:var(--success);font-family:'SF Mono',Monaco,'Cascadia Code',monospace;font-size:12px;line-height:1.6;resize:vertical}
+.json-editor:focus{border-color:var(--primary);outline:none}
+.terminal-header{background:var(--surface-alt);padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;border-radius:var(--radius) var(--radius) 0 0}
+.terminal-body{height:50vh;overflow-y:auto;padding:12px 16px;font-family:'SF Mono',Monospace,monospace;font-size:12px;line-height:1.8;background:var(--terminal-bg);color:var(--terminal-text);border-radius:0 0 var(--radius) var(--radius);transition:background .2s,color .2s}
+.terminal-body div{margin-bottom:1px}
+.pairing-box{border:2px solid var(--primary);border-radius:12px;padding:24px;text-align:center;background:var(--primary-light)}
+.pairing-code{font-size:32px;font-weight:700;color:var(--text);letter-spacing:8px;font-family:'SF Mono',Monospace,monospace}
+hr{border:none;border-top:1px solid var(--border)}
+@media(max-width:1024px){.sidebar{width:56px;padding:12px 8px}.sidebar a span{display:none}.sidebar-brand{font-size:11px;text-align:center;padding:0 0 12px}.sidebar-footer span{display:none}.main{margin-left:56px;padding:16px}.grid{grid-template-columns:repeat(2,1fr)}.config-row{flex-direction:column}}
+@media(max-width:768px){.sidebar{width:48px;padding:8px 4px}.sidebar-footer span{display:none}.main{margin-left:48px;padding:12px}.header{flex-direction:column;gap:10px;align-items:flex-start}.grid{grid-template-columns:1fr 1fr;gap:8px}.stat-card{padding:12px}.stat-card .value{font-size:18px}table{font-size:11px}th,td{padding:6px 8px}.modal{width:95%;padding:16px}}
+@media(max-width:480px){.grid{grid-template-columns:1fr}.header h1{font-size:16px}.config-row{flex-direction:column}.config-field{width:100%}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="sidebar-brand">WhatsBusiness</div>
+    <nav>
+        <a href="#" class="active" onclick="showPage('dashboard')"><span class="icon">📊</span><span>Dashboard</span></a>
+        <a href="#" onclick="showPage('products')"><span class="icon">📦</span><span>Productos</span></a>
+        <a href="#" onclick="showPage('orders')"><span class="icon">📋</span><span>Pedidos</span></a>
+        <a href="#" onclick="showPage('users')"><span class="icon">👥</span><span>Usuarios</span></a>
+        <a href="#" onclick="showPage('coupons')"><span class="icon">🏷️</span><span>Cupones</span></a>
+        <a href="#" onclick="showPage('shipments')"><span class="icon">🚚</span><span>Envíos</span></a>
+        <a href="#" onclick="showPage('reviews')"><span class="icon">⭐</span><span>Reseñas</span></a>
+        <a href="#" onclick="showPage('payments')"><span class="icon">💳</span><span>Pagos</span></a>
+        <a href="#" onclick="showPage('connection')"><span class="icon">📡</span><span>Conexión</span></a>
+        <a href="#" onclick="showPage('settings')"><span class="icon">⚙️</span><span>Ajustes</span></a>
+        <a href="#" onclick="showPage('config')"><span class="icon">📄</span><span>Config</span></a>
+        <a href="#" onclick="showPage('terminal')"><span class="icon">🖥️</span><span>Terminal</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <span class="icon" id="themeIcon">🌙</span>
+            <span id="themeLabel">Modo oscuro</span>
+        </button>
+    </div>
+</div>
+<div class="main" id="mainContent"></div>
+<div class="modal-overlay" id="modal"><div class="modal"><button class="close-btn" onclick="closeModal()">✕</button><div id="modalBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var API = '/api';
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function sym(cur) { var s = { USD: '$', MXN: '$', EUR: '€', ARS: '$', COP: '$', BRL: 'R$' }; return s[cur] || '$'; }
+function toast(msg, err) { var t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast' + (err ? ' error' : ''); t.style.display = 'block'; setTimeout(function(){ t.style.display = 'none'; }, 3000); }
+function showModal(html) { document.getElementById('modalBody').innerHTML = html; document.getElementById('modal').classList.add('show'); }
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+// ─── Theme ───
+function initTheme() {
+    var saved = localStorage.getItem('wb-theme');
+    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        updateThemeBtn(true);
+    }
+}
+function toggleTheme() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('wb-theme', 'light'); }
+    else { document.documentElement.setAttribute('data-theme', 'dark'); localStorage.setItem('wb-theme', 'dark'); }
+    updateThemeBtn(!isDark);
+}
+function updateThemeBtn(isDark) {
+    var icon = document.getElementById('themeIcon');
+    var label = document.getElementById('themeLabel');
+    if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+    if (label) label.textContent = isDark ? 'Modo claro' : 'Modo oscuro';
+}
+initTheme();
+
+// ─── API ───
+async function api(path, opts) {
+    opts = opts || {};
+    var res = await fetch(API + path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts));
+    return res.json();
+}
+
+// ─── Router ───
+async function showPage(page) {
+    document.querySelectorAll('.sidebar a').forEach(function(a) { a.classList.remove('active'); });
+    var link = document.querySelector('.sidebar a[onclick*="' + page + '"]');
+    if (link) link.classList.add('active');
+    var main = document.getElementById('mainContent');
+    switch (page) {
+        case 'dashboard': await showDashboard(main); break;
+        case 'products': await showProducts(main); break;
+        case 'orders': await showOrders(main); break;
+        case 'users': await showUsers(main); break;
+        case 'coupons': await showCoupons(main); break;
+        case 'shipments': await showShipments(main); break;
+        case 'reviews': await showReviews(main); break;
+        case 'payments': await showPayments(main); break;
+        case 'connection': await showConnection(main); break;
+        case 'settings': await showSettings(main); break;
+        case 'config': await showConfig(main); break;
+        case 'terminal': await showTerminal(main); break;
+    }
+}
+
+// ─── Dashboard ───
+async function showDashboard(main) {
+    var d = await api('/stats');
+    var sys = d.system, biz = d.business;
+    var settings = await api('/settings');
+    var curObj = settings.find(function(s) { return s.key === 'currency'; });
+    var cur = curObj ? curObj.value : 'MXN';
+    var s = sym(cur);
+    var fmt = function(b) { var u = ['B','KB','MB','GB']; var i = Math.floor(Math.log(b)/Math.log(1024)); return (b/Math.pow(1024,i)).toFixed(1)+' '+u[i]; };
+    main.innerHTML =
+        '<div class="header"><h1>Dashboard</h1></div>' +
+        '<div class="grid">' +
+        '<div class="stat-card"><div class="value">' + biz.total_users + '</div><div class="label">Usuarios</div></div>' +
+        '<div class="stat-card"><div class="value">' + biz.total_products + '</div><div class="label">Productos</div></div>' +
+        '<div class="stat-card"><div class="value">' + biz.total_orders + '</div><div class="label">Pedidos · ' + biz.pending_orders + ' pend.</div></div>' +
+        '<div class="stat-card"><div class="value">' + s + Number(biz.total_revenue).toFixed(0) + '</div><div class="label">Ingresos</div></div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px">' +
+        '<div class="stat-card"><div class="value" style="font-size:18px">' + biz.total_coupons + '</div><div class="label">Cupones</div></div>' +
+        '<div class="stat-card"><div class="value" style="font-size:18px">' + biz.total_reviews + '</div><div class="label">Reseñas</div></div>' +
+        '<div class="stat-card"><div class="value" style="font-size:18px">' + biz.total_shipments + '</div><div class="label">Envíos</div></div>' +
+        '<div class="stat-card"><div class="value" style="font-size:18px">' + fmt(sys.ram_used) + '</div><div class="label">RAM / ' + fmt(sys.ram_total) + '</div></div>' +
+        '</div>' +
+        (biz.top_product ? '<div class="card"><div class="card-header"><h3>Más vendido</h3></div><p style="font-size:15px;font-weight:600">' + esc(biz.top_product.product_name) + ' — ' + biz.top_product.qty + ' unidades</p></div>' : '') +
+        '<div class="card"><div class="card-header"><h3>Sistema</h3></div>' +
+        '<table><tr><th>Plataforma</th><td>' + sys.platform + '</td></tr><tr><th>CPU</th><td>' + esc(sys.cpu_model) + ' (' + sys.cpu_cores + ' núcleos)</td></tr><tr><th>Node</th><td>' + sys.node_version + '</td></tr><tr><th>Uptime</th><td>' + Math.floor(sys.uptime/86400) + 'd ' + Math.floor(sys.uptime%86400/3600) + 'h ' + Math.floor(sys.uptime%3600/60) + 'm</td></tr></table></div>';
+}
+
+// ─── Products ───
+async function showProducts(main) {
+    var prods = await api('/products');
+    var rows = prods.map(function(p) {
+        return '<tr><td>' + p.id + '</td><td style="font-weight:600">' + esc(p.name) + '</td><td>$' + p.price.toFixed(2) + '</td>' +
+            '<td><span class="badge badge-neutral">' + esc(p.category) + '</span></td>' +
+            '<td>' + (p.image_url ? '<span class="badge badge-info">Sí</span>' : '<span class="badge badge-neutral">No</span>') + '</td>' +
+            '<td>' + (p.available ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>') + '</td>' +
+            '<td><button class="btn btn-sm" onclick="editProduct(' + p.id + ')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteProduct(' + p.id + ')">Eliminar</button></td></tr>';
+    }).join('');
+    main.innerHTML =
+        '<div class="header"><h1>Productos</h1><div class="header-actions"><button class="btn btn-primary" onclick="newProduct()">+ Nuevo</button></div></div>' +
+        '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Imagen</th><th>Estado</th><th></th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>' +
+        (prods.length === 0 ? '<div class="empty-state"><div class="icon">📦</div><p>No hay productos registrados</p></div>' : '') + '</div>';
+}
+function newProduct() {
+    showModal(
+        '<h3>Nuevo Producto</h3>' +
+        '<div class="form-group"><label>Nombre</label><input id="f_name"></div>' +
+        '<div class="form-group"><label>Descripción</label><textarea id="f_desc" rows="2"></textarea></div>' +
+        '<div class="flex"><div class="form-group" style="flex:1"><label>Precio</label><input id="f_price" type="number" step="0.01"></div>' +
+        '<div class="form-group" style="flex:1"><label>Categoría</label><input id="f_cat" value="General"></div></div>' +
+        '<div class="form-group"><label>URL de Imagen</label><input id="f_img"></div>' +
+        '<br><button class="btn btn-primary" onclick="saveNewProduct()">Crear</button>'
+    );
+}
+async function editProduct(id) {
+    var prods = await api('/products');
+    var p = prods.find(function(x) { return x.id === id; });
+    if (!p) return;
+    showModal(
+        '<h3>Editar Producto</h3>' +
+        '<div class="form-group"><label>Nombre</label><input id="f_name" value="' + esc(p.name) + '"></div>' +
+        '<div class="form-group"><label>Descripción</label><textarea id="f_desc" rows="2">' + esc(p.description || '') + '</textarea></div>' +
+        '<div class="flex"><div class="form-group" style="flex:1"><label>Precio</label><input id="f_price" type="number" step="0.01" value="' + p.price + '"></div>' +
+        '<div class="form-group" style="flex:1"><label>Categoría</label><input id="f_cat" value="' + esc(p.category) + '"></div></div>' +
+        '<div class="form-group"><label>URL de Imagen</label><input id="f_img" value="' + esc(p.image_url || '') + '"></div>' +
+        '<div class="form-group"><label>Disponible</label><select id="f_avail"><option value="1"' + (p.available ? ' selected' : '') + '>Sí</option><option value="0"' + (!p.available ? ' selected' : '') + '>No</option></select></div>' +
+        '<br><button class="btn btn-primary" onclick="saveEditProduct(' + id + ')">Guardar</button>'
+    );
+}
+async function saveNewProduct() {
+    var data = { name: document.getElementById('f_name').value, description: document.getElementById('f_desc').value, price: parseFloat(document.getElementById('f_price').value), category: document.getElementById('f_cat').value, image_url: document.getElementById('f_img').value };
+    await api('/products', { method: 'POST', body: JSON.stringify(data) });
+    toast('Producto creado'); closeModal(); showPage('products');
+}
+async function saveEditProduct(id) {
+    var data = { name: document.getElementById('f_name').value, description: document.getElementById('f_desc').value, price: parseFloat(document.getElementById('f_price').value), category: document.getElementById('f_cat').value, image_url: document.getElementById('f_img').value, available: parseInt(document.getElementById('f_avail').value) };
+    await api('/products/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Producto actualizado'); closeModal(); showPage('products');
+}
+async function deleteProduct(id) { if (!confirm('¿Eliminar producto?')) return; await api('/products/' + id, { method: 'DELETE' }); toast('Eliminado'); showPage('products'); }
+
+// ─── Orders ───
+async function showOrders(main) {
+    var orders = await api('/orders?status=');
+    var settings = await api('/settings');
+    var curObj = settings.find(function(s) { return s.key === 'currency'; });
+    var cur = curObj ? curObj.value : 'MXN';
+    var s = sym(cur);
+    function statusBadge(status) {
+        var map = { pending: ['badge-warning','Pendiente'], confirmed: ['badge-info','Confirmado'], completed: ['badge-success','Completado'], cancelled: ['badge-danger','Cancelado'] };
+        var b = map[status] || ['badge-neutral', status];
+        return '<span class="badge ' + b[0] + '">' + b[1] + '</span>';
+    }
+    var rows = orders.map(function(o) {
+        var payB = o.payment_status === 'paid' ? '<span class="badge badge-success">Pagado</span>' : o.payment_status === 'unpaid' ? '<span class="badge badge-warning">Pendiente</span>' : '<span class="badge badge-neutral">—</span>';
+        return '<tr><td style="font-weight:600">' + o.id + '</td><td>' + esc(o.user_name || '—') + '</td><td>' + s + o.total.toFixed(2) + '</td><td>' + payB + '</td><td>' + statusBadge(o.status) + '</td><td>' + new Date(o.created_at).toLocaleDateString() + '</td><td><button class="btn btn-sm" onclick="showOrderDetail(' + o.id + ')">Ver</button></td></tr>';
+    }).join('');
+    main.innerHTML =
+        '<div class="header"><h1>Pedidos</h1></div>' +
+        '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Pago</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>' +
+        (orders.length === 0 ? '<div class="empty-state"><div class="icon">📋</div><p>No hay pedidos registrados</p></div>' : '') + '</div>';
+}
+async function showOrderDetail(id) {
+    var orders = await api('/orders?status=');
+    var o = orders.find(function(x) { return x.id === id; });
+    if (!o) return;
+    var settings = await api('/settings');
+    var curObj = settings.find(function(s) { return s.key === 'currency'; });
+    var cur = curObj ? curObj.value : 'MXN';
+    var s = sym(cur);
+    showModal(
+        '<h3>Pedido #' + o.id + '</h3>' +
+        '<div class="form-group"><label>Cliente</label><p style="font-size:13px">' + esc(o.user_name || '—') + '</p></div>' +
+        '<div class="form-group"><label>Total</label><p style="font-size:13px;font-weight:600">' + s + o.total.toFixed(2) + '</p></div>' +
+        '<div class="form-group"><label>Pago</label><p style="font-size:13px">' + (o.payment_status === 'paid' ? 'Pagado' : 'Pendiente') + '</p></div>' +
+        '<div class="form-group"><label>Cambiar estado</label>' +
+        '<select id="o_status"><option value="pending"' + (o.status==='pending'?' selected':'') + '>Pendiente</option><option value="confirmed"' + (o.status==='confirmed'?' selected':'') + '>Confirmado</option><option value="completed"' + (o.status==='completed'?' selected':'') + '>Completado</option><option value="cancelled"' + (o.status==='cancelled'?' selected':'') + '>Cancelado</option></select></div>' +
+        '<button class="btn btn-primary" onclick="updateOrderStatus(' + o.id + ')">Actualizar estado</button>' +
+        '<hr style="margin:16px 0">' +
+        '<h4 style="font-size:13px;font-weight:700;margin-bottom:12px">Agregar Seguimiento</h4>' +
+        '<div class="form-group"><label>Número de guía</label><input id="s_track"></div>' +
+        '<div class="form-group"><label>Transportista</label><input id="s_carrier"></div>' +
+        '<div class="form-group"><label>URL de rastreo</label><input id="s_url"></div>' +
+        '<button class="btn btn-success" onclick="addShipment(' + o.id + ')">Registrar Envío</button>'
+    );
+}
+async function updateOrderStatus(id) {
+    await api('/orders/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: document.getElementById('o_status').value }) });
+    toast('Estado actualizado'); closeModal(); showPage('orders');
+}
+async function addShipment(id) {
+    await api('/orders/' + id + '/shipment', { method: 'POST', body: JSON.stringify({ tracking_number: document.getElementById('s_track').value, carrier: document.getElementById('s_carrier').value, tracking_url: document.getElementById('s_url').value }) });
+    toast('Envío registrado'); closeModal(); showPage('orders');
+}
+
+// ─── Users ───
+async function showUsers(main) {
+    var users = await api('/users');
+    var settings = await api('/settings');
+    var curObj = settings.find(function(s) { return s.key === 'currency'; });
+    var cur = curObj ? curObj.value : 'MXN';
+    var s = sym(cur);
+    var rows = users.map(function(u) {
+        return '<tr><td style="font-weight:600">' + esc(u.name || 'Sin nombre') + '</td><td>' + (u.phone || '—') + '</td><td>' + (u.total_orders || 0) + '</td><td>' + s + (u.total_spent || 0).toFixed(2) + '</td><td>' + new Date(u.last_interaction).toLocaleString() + '</td></tr>';
+    }).join('');
+    main.innerHTML =
+        '<div class="header"><h1>Usuarios</h1></div>' +
+        '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Pedidos</th><th>Gastado</th><th>Última interacción</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>' +
+        (users.length === 0 ? '<div class="empty-state"><div class="icon">👥</div><p>No hay usuarios registrados</p></div>' : '') + '</div>';
+}
+
+// ─── Coupons ───
+async function showCoupons(main) {
+    var cups = await api('/coupons');
+    var rows = cups.map(function(c) {
+        return '<tr><td style="font-weight:600;font-family:monospace">' + esc(c.code) + '</td><td>' + esc(c.description || '—') + '</td><td>' + (c.discount_type === 'percentage' ? c.discount_value + '%' : '$' + c.discount_value) + '</td>' +
+            '<td>' + c.used_count + (c.max_uses > 0 ? '/' + c.max_uses : '') + '</td><td>' + (c.expires_at ? new Date(c.expires_at).toLocaleDateString() : '—') + '</td>' +
+            '<td>' + (c.active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>') + '</td>' +
+            '<td><button class="btn btn-sm" onclick="editCoupon(' + c.id + ')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteCoupon(' + c.id + ')">Eliminar</button></td></tr>';
+    }).join('');
+    main.innerHTML =
+        '<div class="header"><h1>Cupones</h1><div class="header-actions"><button class="btn btn-primary" onclick="newCoupon()">+ Nuevo</button></div></div>' +
+        '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr><th>Código</th><th>Descripción</th><th>Descuento</th><th>Usos</th><th>Expira</th><th>Estado</th><th></th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>' +
+        (cups.length === 0 ? '<div class="empty-state"><div class="icon">🏷️</div><p>No hay cupones registrados</p></div>' : '') + '</div>';
+}
+function newCoupon() {
+    showModal(
+        '<h3>Nuevo Cupón</h3>' +
+        '<div class="form-group"><label>Código</label><input id="c_code"></div>' +
+        '<div class="form-group"><label>Descripción</label><input id="c_desc"></div>' +
+        '<div class="flex"><div class="form-group" style="flex:1"><label>Tipo</label><select id="c_type"><option value="percentage">Porcentaje</option><option value="fixed">Fijo</option></select></div>' +
+        '<div class="form-group" style="flex:1"><label>Valor</label><input id="c_val" type="number"></div></div>' +
+        '<div class="flex"><div class="form-group" style="flex:1"><label>Compra mín.</label><input id="c_min" type="number" value="0"></div>' +
+        '<div class="form-group" style="flex:1"><label>Usos máx. (0=∞)</label><input id="c_max" type="number" value="0"></div></div>' +
+        '<div class="form-group"><label>Expira (YYYY-MM-DD)</label><input id="c_exp"></div>' +
+        '<br><button class="btn btn-primary" onclick="saveNewCoupon()">Crear</button>'
+    );
+}
+async function editCoupon(id) {
+    var cups = await api('/coupons');
+    var c = cups.find(function(x) { return x.id === id; });
+    if (!c) return;
+    showModal(
+        '<h3>Editar Cupón</h3>' +
+        '<div class="form-group"><label>Descripción</label><input id="c_desc" value="' + esc(c.description || '') + '"></div>' +
+        '<div class="flex"><div class="form-group" style="flex:1"><label>Tipo</label><select id="c_type"><option value="percentage"' + (c.discount_type==='percentage'?' selected':'') + '>Porcentaje</option><option value="fixed"' + (c.discount_type==='fixed'?' selected':'') + '>Fijo</option></select></div>' +
+        '<div class="form-group" style="flex:1"><label>Valor</label><input id="c_val" type="number" value="' + c.discount_value + '"></div></div>' +
+        '<div class="flex"><div class="form-group" style="flex:1"><label>Compra mín.</label><input id="c_min" type="number" value="' + c.min_purchase + '"></div>' +
+        '<div class="form-group" style="flex:1"><label>Usos máx. (0=∞)</label><input id="c_max" type="number" value="' + c.max_uses + '"></div></div>' +
+        '<div class="form-group"><label>Expira (YYYY-MM-DD)</label><input id="c_exp" value="' + (c.expires_at ? c.expires_at.split('T')[0] : '') + '"></div>' +
+        '<br><button class="btn btn-primary" onclick="saveEditCoupon(' + id + ')">Guardar</button>'
+    );
+}
+async function saveNewCoupon() {
+    var data = { code: document.getElementById('c_code').value, description: document.getElementById('c_desc').value, discount_type: document.getElementById('c_type').value, discount_value: parseFloat(document.getElementById('c_val').value), min_purchase: parseFloat(document.getElementById('c_min').value || 0), max_uses: parseInt(document.getElementById('c_max').value || 0), expires_at: document.getElementById('c_exp').value || null };
+    await api('/coupons', { method: 'POST', body: JSON.stringify(data) });
+    toast('Cupón creado'); closeModal(); showPage('coupons');
+}
+async function saveEditCoupon(id) {
+    var data = { description: document.getElementById('c_desc').value, discount_type: document.getElementById('c_type').value, discount_value: parseFloat(document.getElementById('c_val').value), min_purchase: parseFloat(document.getElementById('c_min').value || 0), max_uses: parseInt(document.getElementById('c_max').value || 0), expires_at: document.getElementById('c_exp').value || null };
+    await api('/coupons/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Cupón actualizado'); closeModal(); showPage('coupons');
+}
+async function deleteCoupon(id) { if (!confirm('¿Eliminar cupón?')) return; await api('/coupons/' + id, { method: 'DELETE' }); toast('Eliminado'); showPage('coupons'); }
+
+// ─── Shipments ───
+async function showShipments(main) {
+    var ships = await api('/shipments');
+    var rows = ships.map(function(s) {
+        return '<tr><td style="font-weight:600">#' + s.order_id + '</td><td>' + esc(s.user_name || '—') + '</td><td style="font-family:monospace">' + esc(s.tracking_number) + '</td><td>' + (s.carrier || '—') + '</td><td>' + new Date(s.created_at).toLocaleDateString() + '</td></tr>';
+    }).join('');
+    main.innerHTML =
+        '<div class="header"><h1>Envíos</h1></div>' +
+        '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Guía</th><th>Transportista</th><th>Fecha</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>' +
+        (ships.length === 0 ? '<div class="empty-state"><div class="icon">🚚</div><p>No hay envíos registrados</p></div>' : '') + '</div>';
+}
+
+// ─── Reviews ───
+async function showReviews(main) {
+    var revs = await api('/reviews');
+    var rows = revs.map(function(r) {
+        return '<tr><td style="font-weight:600">' + esc(r.user_name || '—') + '</td><td>#' + r.order_id + '</td><td>' + '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) + ' ' + r.rating + '/5</td><td>' + esc(r.comment || '—') + '</td><td>' + new Date(r.created_at).toLocaleDateString() + '</td></tr>';
+    }).join('');
+    main.innerHTML =
+        '<div class="header"><h1>Reseñas</h1></div>' +
+        '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr><th>Usuario</th><th>Pedido</th><th>Calificación</th><th>Comentario</th><th>Fecha</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>' +
+        (revs.length === 0 ? '<div class="empty-state"><div class="icon">⭐</div><p>No hay reseñas aún</p></div>' : '') + '</div>';
+}
+
+// ─── Payments ───
+async function showPayments(main) {
+    var settings = await api('/settings');
+    var banks = await api('/bank-accounts');
+    var bankEn = settings.find(function(s){return s.key==='payment_bank_enabled';})?.value==='1';
+    var stripeEn = settings.find(function(s){return s.key==='payment_stripe_enabled';})?.value==='1';
+    var mpEn = settings.find(function(s){return s.key==='payment_mercadopago_enabled';})?.value==='1';
+    var ppEn = settings.find(function(s){return s.key==='payment_paypal_enabled';})?.value==='1';
+    function badge(on) { return on ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-neutral">Inactivo</span>'; }
+    var rows = banks.map(function(b) {
+        return '<tr><td style="font-weight:600">' + esc(b.bank_name) + '</td><td>' + esc(b.owner_name || '—') + '</td><td style="font-family:monospace">' + (b.clabe || '—') + '</td><td>' + (b.account_number || '—') + '</td><td>' + (b.is_default ? '⭐' : '—') + '</td>' +
+            '<td><button class="btn btn-sm" onclick="editBank(' + b.id + ')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteBank(' + b.id + ')">Eliminar</button></td></tr>';
+    }).join('');
+    main.innerHTML =
+        '<div class="header"><h1>Pagos</h1></div>' +
+        '<div class="card"><div class="card-header"><h3>Métodos de pago</h3></div>' +
+        '<div style="display:flex;gap:24px;flex-wrap:wrap">' +
+        '<div><span class="label">Transferencia</span><br>' + badge(bankEn) + '</div>' +
+        '<div><span class="label">Stripe</span><br>' + badge(stripeEn) + '</div>' +
+        '<div><span class="label">Mercado Pago</span><br>' + badge(mpEn) + '</div>' +
+        '<div><span class="label">PayPal</span><br>' + badge(ppEn) + '</div></div>' +
+        '<div style="margin-top:12px"><button class="btn btn-sm" onclick="togglePayment(\'payment_bank_enabled\')">' + (bankEn ? 'Desactivar' : 'Activar') + ' Transferencia</button></div></div>' +
+        '<div class="card"><div class="card-header"><h3>Cuentas Bancarias</h3><button class="btn btn-sm btn-primary" onclick="newBank()">+ Agregar</button></div>' +
+        '<table><thead><tr><th>Banco</th><th>Titular</th><th>CLABE</th><th>Cuenta</th><th>Predet.</th><th></th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>' +
+        (banks.length === 0 ? '<div class="empty-state"><p>No hay cuentas registradas</p></div>' : '') + '</div>';
+}
+async function togglePayment(key) {
+    var s = await api('/settings');
+    var found = s.find(function(x){return x.key===key;});
+    var v = found && found.value === '1' ? '0' : '1';
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ key: key, value: v }) });
+    showPage('payments');
+}
+function newBank() {
+    showModal('<h3>Nueva Cuenta</h3>' +
+        '<div class="form-group"><label>Banco</label><input id="b_name"></div>' +
+        '<div class="form-group"><label>Titular</label><input id="b_owner"></div>' +
+        '<div class="form-group"><label>CLABE</label><input id="b_clabe"></div>' +
+        '<div class="form-group"><label>No. Cuenta</label><input id="b_num"></div>' +
+        '<br><button class="btn btn-primary" onclick="saveNewBank()">Crear</button>');
+}
+async function editBank(id) {
+    var banks = await api('/bank-accounts');
+    var b = banks.find(function(x){return x.id===id;});
+    if (!b) return;
+    showModal('<h3>Editar Cuenta</h3>' +
+        '<div class="form-group"><label>Banco</label><input id="b_name" value="' + esc(b.bank_name) + '"></div>' +
+        '<div class="form-group"><label>Titular</label><input id="b_owner" value="' + esc(b.owner_name||'') + '"></div>' +
+        '<div class="form-group"><label>CLABE</label><input id="b_clabe" value="' + esc(b.clabe||'') + '"></div>' +
+        '<div class="form-group"><label>No. Cuenta</label><input id="b_num" value="' + esc(b.account_number||'') + '"></div>' +
+        '<br><button class="btn btn-primary" onclick="saveEditBank(' + id + ')">Guardar</button>');
+}
+async function saveNewBank() {
+    var data = { bank_name: document.getElementById('b_name').value, owner_name: document.getElementById('b_owner').value, clabe: document.getElementById('b_clabe').value, account_number: document.getElementById('b_num').value };
+    await api('/bank-accounts', { method: 'POST', body: JSON.stringify(data) });
+    toast('Cuenta creada'); closeModal(); showPage('payments');
+}
+async function saveEditBank(id) {
+    var data = { bank_name: document.getElementById('b_name').value, owner_name: document.getElementById('b_owner').value, clabe: document.getElementById('b_clabe').value, account_number: document.getElementById('b_num').value };
+    await api('/bank-accounts/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Cuenta actualizada'); closeModal(); showPage('payments');
+}
+async function deleteBank(id) { if (!confirm('¿Eliminar cuenta?')) return; await api('/bank-accounts/' + id, { method: 'DELETE' }); toast('Eliminada'); showPage('payments'); }
+
+// ─── Settings ───
+async function showSettings(main) {
+    var settings = await api('/settings');
+    var map = {};
+    settings.forEach(function(s) { map[s.key] = s.value; });
+    function field(key, label, secret) {
+        var val = map[key] || '';
+        return '<div class="form-group"><label>' + label + '</label><div class="flex"><input id="s_' + key + '" value="' + esc(val) + '"' + (secret ? ' type="password"' : '') + ' style="flex:1"><button class="btn btn-sm btn-primary" onclick="saveSetting(\'' + key + '\')">Guardar</button></div></div>';
+    }
+    main.innerHTML =
+        '<div class="header"><h1>Ajustes</h1></div>' +
+        '<div class="card"><div class="card-header"><h3>Negocio</h3></div>' +
+        field('business_name','Nombre del Negocio') + field('currency','Moneda (MXN, USD, EUR...)') + '</div>' +
+        '<div class="card"><div class="card-header"><h3>Propietario</h3></div>' +
+        field('owner_name','Nombre') + field('owner_phone','Teléfono') + field('owner_email','Email') + field('owner_number','Número WhatsApp') + '</div>' +
+        '<div class="card"><div class="card-header"><h3>Stripe</h3></div>' + field('stripe_secret_key','Secret Key',true) + '</div>' +
+        '<div class="card"><div class="card-header"><h3>Mercado Pago</h3></div>' + field('mercadopago_access_token','Access Token',true) + '</div>' +
+        '<div class="card"><div class="card-header"><h3>PayPal</h3></div>' + field('paypal_client_id','Client ID') + field('paypal_client_secret','Client Secret',true) + '</div>';
+}
+async function saveSetting(key) {
+    var el = document.getElementById('s_' + key);
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ key: key, value: el.value }) });
+    toast('Guardado');
+}
+
+// ─── Connection ───
+async function showConnection(main) {
+    var status = await api('/connection/status');
+    main.innerHTML =
+        '<div class="header"><h1>Conexión WhatsApp</h1></div>' +
+        '<div class="card">' +
+        '<div style="text-align:center;padding:24px">' +
+        '<div style="font-size:40px;margin-bottom:8px" id="connIcon">' + getStatusIcon(status.status) + '</div>' +
+        '<div style="font-size:16px;font-weight:700;margin-bottom:4px" id="connLabel">' + getStatusLabel(status.status) + '</div>' +
+        '<div style="font-size:13px;color:var(--text-secondary)" id="connDetail">' + getStatusDetail(status.status, status.phone) + '</div></div>' +
+        '<div id="qrContainer" style="text-align:center;padding:20px;' + (status.status === 'qr' ? '' : 'display:none') + '">' +
+        '<div id="qrImage"><img src="/api/connection/qr-image?t=' + Date.now() + '" style="width:240px;height:240px;border-radius:var(--radius);border:1px solid var(--border)" alt="QR"></div>' +
+        '<p style="margin-top:12px;font-size:13px;color:var(--warning)">Escanea este código QR con WhatsApp</p>' +
+        '<p style="font-size:12px;color:var(--text-tertiary)">WhatsApp → Menú → Dispositivos vinculados → Vincular dispositivo</p></div></div>' +
+        '<div class="card"><div class="card-header"><h3>Pairing por número</h3></div>' +
+        '<p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Alternativa al QR. Ingresa tu número y recibe un código de 8 dígitos.</p>' +
+        '<div class="flex"><div class="form-group" style="flex:1"><label>Número (con código país, sin +)</label><input id="pairPhone" placeholder="Ej: 521234567890"></div>' +
+        '<button class="btn btn-primary" onclick="requestPairing()" style="margin-top:20px">Solicitar</button></div>' +
+        '<div id="pairResult" style="margin-top:16px;display:none"><div class="pairing-box">' +
+        '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Código de vinculación</div>' +
+        '<div class="pairing-code" id="pairCode"></div>' +
+        '<p style="font-size:12px;color:var(--warning);margin-top:10px">WhatsApp → Vincular dispositivo → Vincular con número de teléfono</p></div></div></div>' +
+        '<div class="card"><div class="card-header"><h3>Sesión</h3></div>' +
+        '<button class="btn btn-danger" onclick="logoutWhatsApp()">Cerrar sesión</button> ' +
+        '<span style="font-size:12px;color:var(--text-tertiary)">Eliminará las credenciales guardadas</span></div>';
+    startQRPolling();
+}
+var _qrPollInterval = null;
+function startQRPolling() {
+    clearInterval(_qrPollInterval);
+    _qrPollInterval = setInterval(async function() {
+        try {
+            var status = await api('/connection/status');
+            var icon = document.getElementById('connIcon');
+            var label = document.getElementById('connLabel');
+            var detail = document.getElementById('connDetail');
+            var qr = document.getElementById('qrContainer');
+            if (icon) icon.textContent = getStatusIcon(status.status);
+            if (label) label.textContent = getStatusLabel(status.status);
+            if (detail) detail.textContent = getStatusDetail(status.status, status.phone);
+            if (qr) qr.style.display = status.status === 'qr' ? 'block' : 'none';
+            if (status.status === 'connected') clearInterval(_qrPollInterval);
+        } catch (e) {}
+    }, 5000);
+}
+function getStatusIcon(s) { return { connected:'✅', qr:'📱', reconnecting:'🔄', disconnected:'❌', logged_out:'🚪', no_bot:'⚙️' }[s] || '❓'; }
+function getStatusLabel(s) { return { connected:'Conectado', qr:'Esperando escaneo QR', reconnecting:'Reconectando...', disconnected:'Desconectado', logged_out:'Sesión cerrada', no_bot:'Bot no iniciado' }[s] || 'Desconocido'; }
+function getStatusDetail(s, p) { if (s==='connected'&&p) return 'Conectado como +'+p; if (s==='connected') return 'WhatsApp conectado correctamente'; if (s==='qr') return 'Escanea el código QR con tu WhatsApp'; if (s==='reconnecting') return 'Reconectando...'; return ''; }
+async function requestPairing() {
+    var phone = document.getElementById('pairPhone')?.value?.trim();
+    if (!phone) { toast('Ingresa un número', true); return; }
+    try {
+        var res = await api('/connection/pairing', { method:'POST', body:JSON.stringify({phone:phone}) });
+        if (res.success && res.code) { document.getElementById('pairCode').textContent = res.code; document.getElementById('pairResult').style.display='block'; toast('Código: '+res.code); }
+        else toast('Error al solicitar código', true);
+    } catch (e) { toast('Error: '+e.message, true); }
+}
+async function logoutWhatsApp() { if (!confirm('¿Cerrar sesión?')) return; await api('/connection/logout',{method:'POST'}); toast('Sesión cerrada'); showPage('connection'); }
+
+// ─── Config ───
+async function showConfig(main) {
+    var config = await api('/config');
+    function msgs() {
+        return ['welcome_message','catalog_message','order_confirmation','help_message','greeting_no_products','payment_instructions','order_status_pending','order_status_confirmed','order_status_completed','order_status_cancelled'].map(function(key) {
+            return '<div class="form-group"><label>' + key.replace(/_/g,' ') + '</label>' +
+                '<textarea id="cfg_msg_'+key+'" rows="3" style="font-size:12px">' + esc(config.messages && config.messages[key] ? config.messages[key] : '') + '</textarea></div>';
+        }).join('');
+    }
+    function opt(val, sel) { return '<option value="'+val+'"'+(sel===val?' selected':'')+'>'+val+'</option>'; }
+    main.innerHTML =
+        '<div class="header"><h1>Configuración</h1><div class="header-actions">' +
+        '<button class="btn" onclick="showConfig(document.getElementById(\'mainContent\'))">Recargar</button> ' +
+        '<button class="btn btn-primary" onclick="saveRawConfig()">Guardar</button></div></div>' +
+        '<div class="tab-bar"><button class="tab-btn active" onclick="switchConfigTab(\'visual\',this)">Visual</button><button class="tab-btn" onclick="switchConfigTab(\'json\',this)">JSON</button></div>' +
+        '<div id="configVisual"><div class="card">' +
+        '<div class="config-section"><h4>Negocio</h4>' +
+        '<div class="config-row"><div class="config-field"><label>Nombre</label><input id="cfg_biz_name" value="'+esc(config.business&&config.business.name||'')+'"></div>' +
+        '<div class="config-field"><label>Moneda</label><select id="cfg_biz_currency">'+['MXN','USD','EUR','ARS','COP','BRL','CLP','PEN'].map(function(c){return opt(c,config.business&&config.business.currency);}).join('')+'</select></div></div>' +
+        '<div class="config-row"><div class="config-field"><label>Propietario</label><input id="cfg_biz_owner_name" value="'+esc(config.business&&config.business.owner_name||'')+'"></div>' +
+        '<div class="config-field"><label>Número WhatsApp</label><input id="cfg_biz_owner_number" value="'+esc(config.business&&config.business.owner_number||'')+'"></div></div>' +
+        '<div class="config-row"><div class="config-field"><label>Email</label><input id="cfg_biz_owner_email" value="'+esc(config.business&&config.business.owner_email||'')+'"></div>' +
+        '<div class="config-field"><label>Teléfono</label><input id="cfg_biz_owner_phone" value="'+esc(config.business&&config.business.owner_phone||'')+'"></div></div>' +
+        '<button class="btn btn-primary" onclick="saveConfigSection(\'business\')">Guardar</button></div>' +
+        '<div class="config-section"><h4>Pagos</h4>' +
+        '<div class="config-row">' +
+        '<div class="config-field"><label>Transferencia</label><label class="toggle-switch"><input type="checkbox" id="cfg_pay_bank"'+(config.payments&&config.payments.bank_enabled?' checked':'')+'><span class="toggle-slider"></span></label></div>' +
+        '<div class="config-field"><label>Stripe</label><label class="toggle-switch"><input type="checkbox" id="cfg_pay_stripe"'+(config.payments&&config.payments.stripe_enabled?' checked':'')+'><span class="toggle-slider"></span></label></div>' +
+        '<div class="config-field"><label>Mercado Pago</label><label class="toggle-switch"><input type="checkbox" id="cfg_pay_mp"'+(config.payments&&config.payments.mercadopago_enabled?' checked':'')+'><span class="toggle-slider"></span></label></div>' +
+        '<div class="config-field"><label>PayPal</label><label class="toggle-switch"><input type="checkbox" id="cfg_pay_paypal"'+(config.payments&&config.payments.paypal_enabled?' checked':'')+'><span class="toggle-slider"></span></label></div></div>' +
+        '<div class="config-row"><div class="config-field"><label>Stripe Secret Key</label><input id="cfg_pay_stripe_key" type="password" value="'+esc(config.payments&&config.payments.stripe_secret_key||'')+'"></div>' +
+        '<div class="config-field"><label>PayPal Mode</label><select id="cfg_pay_pp_mode"><option value="sandbox"'+(config.payments&&config.payments.paypal_mode==='sandbox'?' selected':'')+'>Sandbox</option><option value="live"'+(config.payments&&config.payments.paypal_mode==='live'?' selected':'')+'>Live</option></select></div></div>' +
+        '<div class="config-row"><div class="config-field"><label>Mercado Pago Token</label><input id="cfg_pay_mp_token" type="password" value="'+esc(config.payments&&config.payments.mercadopago_access_token||'')+'"></div></div>' +
+        '<div class="config-row"><div class="config-field"><label>PayPal Client ID</label><input id="cfg_pay_pp_id" value="'+esc(config.payments&&config.payments.paypal_client_id||'')+'"></div></div>' +
+        '<div class="config-row"><div class="config-field"><label>PayPal Client Secret</label><input id="cfg_pay_pp_secret" type="password" value="'+esc(config.payments&&config.payments.paypal_client_secret||'')+'"></div></div>' +
+        '<button class="btn btn-primary" onclick="saveConfigSection(\'payments\')">Guardar</button></div>' +
+        '<div class="config-section"><h4>Mensajes</h4>'+msgs()+'<button class="btn btn-primary" onclick="saveConfigSection(\'messages\')">Guardar</button></div></div></div>' +
+        '<div id="configJson" style="display:none"><div class="card"><div class="card-header"><h3>Raw JSON</h3></div>' +
+        '<textarea class="json-editor" id="configRawText">'+esc(JSON.stringify(config,null,2))+'</textarea>' +
+        '<div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-primary" onclick="saveRawConfig()">Guardar JSON</button> <button class="btn" onclick="validateJson()">Validar JSON</button></div></div></div>';
+}
+function switchConfigTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    document.getElementById('configVisual').style.display = tab==='visual'?'block':'none';
+    document.getElementById('configJson').style.display = tab==='json'?'block':'none';
+}
+async function saveConfigSection(section) {
+    var data = {};
+    if (section==='business') data = {name:document.getElementById('cfg_biz_name').value,currency:document.getElementById('cfg_biz_currency').value,owner_name:document.getElementById('cfg_biz_owner_name').value,owner_number:document.getElementById('cfg_biz_owner_number').value,owner_email:document.getElementById('cfg_biz_owner_email').value,owner_phone:document.getElementById('cfg_biz_owner_phone').value};
+    else if (section==='payments') data = {bank_enabled:document.getElementById('cfg_pay_bank').checked,stripe_enabled:document.getElementById('cfg_pay_stripe').checked,mercadopago_enabled:document.getElementById('cfg_pay_mp').checked,paypal_enabled:document.getElementById('cfg_pay_paypal').checked,stripe_secret_key:document.getElementById('cfg_pay_stripe_key').value,mercadopago_access_token:document.getElementById('cfg_pay_mp_token').value,paypal_client_id:document.getElementById('cfg_pay_pp_id').value,paypal_client_secret:document.getElementById('cfg_pay_pp_secret').value,paypal_mode:document.getElementById('cfg_pay_pp_mode').value};
+    else if (section==='messages') { ['welcome_message','catalog_message','order_confirmation','help_message','greeting_no_products','payment_instructions','order_status_pending','order_status_confirmed','order_status_completed','order_status_cancelled'].forEach(function(k){var el=document.getElementById('cfg_msg_'+k);if(el)data[k]=el.value;}); }
+    try { var res = await api('/config/'+section,{method:'PUT',body:JSON.stringify(data)}); if(res.success)toast('Guardado');else toast('Error',true); } catch(e){toast('Error: '+e.message,true);}
+}
+async function saveRawConfig() {
+    var text = document.getElementById('configRawText').value;
+    try { var p=JSON.parse(text); var res=await api('/config',{method:'PUT',body:JSON.stringify(p)}); if(res.success){toast('Configuración actualizada');await showConfig(document.getElementById('mainContent'));}else toast('Error',true); } catch(e){toast('JSON inválido: '+e.message,true);}
+}
+function validateJson() { try { JSON.parse(document.getElementById('configRawText').value); toast('JSON válido'); } catch(e) { toast('JSON inválido: '+e.message,true); } }
+
+// ─── Terminal ───
+var _terminalLogInterval = null;
+var _terminalSSE = null;
+async function showTerminal(main) {
+    if (_terminalLogInterval) clearInterval(_terminalLogInterval);
+    if (_terminalSSE) { _terminalSSE.close(); _terminalSSE = null; }
+    var data = await api('/logs/stats');
+    var s = data.stats||{}, c = data.connection||{}, logs = data.logs||[];
+    main.innerHTML =
+        '<div class="header"><h1>Terminal</h1><div style="display:flex;gap:8px;align-items:center">' +
+        '<span id="terminalOnline" style="font-size:12px;font-weight:600;color:'+(c.connected?'var(--success)':'var(--danger)')+'">'+(c.connected?'● ONLINE':'● OFFLINE')+'</span></div></div>' +
+        '<div class="card" style="padding:0;overflow:hidden">' +
+        '<div class="terminal-header"><span style="font-size:12px;color:var(--text-secondary);font-weight:500">Logs en tiempo real</span>' +
+        '<button class="btn btn-sm" onclick="clearTerminal()">Limpiar</button></div>' +
+        '<div class="terminal-body" id="terminalOutput">'+logs.map(formatLogLine).join('')+'</div></div>' +
+        '<div class="grid" style="margin-top:16px">' +
+        '<div class="stat-card"><div class="value" style="font-size:16px">'+(c.connected?'🟢 Conectado':c.status==='qr'?'📱 QR':c.status==='reconnecting'?'🔄 Reconectando':'🔴 Offline')+'</div><div class="label">Estado WhatsApp</div></div>' +
+        '<div class="stat-card"><div class="value">'+(s.messagesReceived||0)+'</div><div class="label">Recibidos</div></div>' +
+        '<div class="stat-card"><div class="value">'+(s.messagesSent||0)+'</div><div class="label">Enviados</div></div>' +
+        '<div class="stat-card"><div class="value">'+(s.reconnects||0)+'</div><div class="label">Reconexiones</div></div></div>';
+    _terminalSSE = new EventSource('/api/logs/stream');
+    _terminalSSE.onmessage = function(e) {
+        try { var entry=JSON.parse(e.data); if(entry.type==='connected')return; var output=document.getElementById('terminalOutput'); if(output){output.innerHTML+=formatLogLine(entry);output.scrollTop=output.scrollHeight;} } catch(err){}
+    };
+    _terminalLogInterval = setInterval(async function() {
+        try { var d=await api('/logs/stats'); var cs=d.connection||{}; var el=document.getElementById('terminalOnline'); if(el){el.style.color=cs.connected?'var(--success)':'var(--danger)';el.textContent=cs.connected?'● ONLINE':'● OFFLINE';} } catch(e){}
+    }, 5000);
+}
+function formatLogLine(l) {
+    var ts = new Date(l.time).toLocaleTimeString('es-ES');
+    var icons = {info:'📋',msg_in:'📩',msg_out:'📤',error:'❌',warn:'⚠️',connected:'✅',qr:'📱',reconnect:'🔄',status:'🤖'};
+    var logColors = {info:'var(--text-tertiary)',msg_in:'var(--success)',msg_out:'var(--info)',error:'var(--danger)',warn:'var(--warning)',connected:'var(--success)',qr:'var(--warning)',reconnect:'var(--warning)',status:'var(--primary)'};
+    return '<div style="color:'+(logColors[l.type]||'var(--terminal-text)')+'"><span style="color:var(--terminal-ts)">'+ts+'</span> '+(icons[l.type]||'📌')+' '+esc(l.message)+'</div>';
+}
+function clearTerminal() { var output=document.getElementById('terminalOutput'); if(output)output.innerHTML='<div style="color:var(--terminal-ts);text-align:center;padding:20px">Terminal limpiada</div>'; }
+
+// ─── Init ───
+showPage('dashboard');
+</script>
+</body>
+</html>

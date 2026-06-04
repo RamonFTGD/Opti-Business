@@ -1,0 +1,31 @@
+{
+  "name": "whatsbusiness-bot",
+  "version": "1.0.0",
+  "description": "Bot de WhatsApp para negocios — Catálogo, pedidos y automatización",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "business",
+    "baileys",
+    "automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
+    "axios": "^1.16.1",
+    "better-sqlite3": "^12.10.0",
+    "cloudflared": "^0.7.1",
+    "express": "^5.2.1",
+    "inquirer": "^14.0.2",
+    "mercadopago": "^3.1.0",
+    "pino": "^10.3.1",
+    "qrcode": "^1.5.4",
+    "stripe": "^22.2.0"
+  }
+}
