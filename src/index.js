@@ -12,14 +12,7 @@ async function startCloudflared(port) {
     return new Promise((resolve) => {
         console.log('🔗 Abriendo túnel Cloudflared...\n');
 
-        const cfPath = require.resolve('cloudflared');
-        const cfDir = cfPath.substring(0, cfPath.lastIndexOf('node_modules'));
-        const binaryPath = require('child_process').execSync(
-            `node -e "console.log(require('cloudflared').binaryPath || '')"`,
-            { encoding: 'utf8', cwd: __dirname }
-        ).trim();
-
-        const cloudflaredBin = binaryPath || 'cloudflared';
+        const cloudflaredBin = require('cloudflared').bin || 'cloudflared';
 
         try {
             const cf = spawn(cloudflaredBin, ['tunnel', '--url', `http://localhost:${port}`], {
