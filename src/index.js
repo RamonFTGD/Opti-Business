@@ -94,13 +94,13 @@ async function main() {
 ╚══════════════════════════════════════════╝
 `);
 
-    const db = new DatabaseManager();
+    const db = await DatabaseManager.create();
 
     console.log('🤖 Iniciando bot de WhatsApp...');
     const bot = new WhatsAppBot(db);
     
     console.log('🌐 Iniciando servidor web...');
-    const port = await startWebServer(bot);
+    const port = await startWebServer(bot, db);
     console.log(`📡 Servidor local: http://localhost:${port}`);
 
     bot.start((status, data) => {
@@ -120,7 +120,7 @@ async function main() {
 
     startCloudflared(port);
 
-    const menu = new BusinessMenu();
+    const menu = new BusinessMenu(db, bot);
 
     const origGetHeader = menu.getHeader.bind(menu);
     menu.getHeader = () => {

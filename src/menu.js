@@ -1,11 +1,10 @@
 const inquirer = require('inquirer').default;
-const DatabaseManager = require('./database');
 const WhatsAppBot = require('./bot');
 
 class BusinessMenu {
-    constructor() {
-        this.db = new DatabaseManager();
-        this.bot = new WhatsAppBot(this.db);
+    constructor(db, bot) {
+        this.db = db;
+        this.bot = bot || new WhatsAppBot(db);
         this.botRunning = false;
     }
 

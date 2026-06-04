@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3');
+const initSqlJs = require('sql.js');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -17,15 +17,101 @@ function loadConfig() {
 }
 
 class DatabaseManager {
-    constructor() {
+    static async create() {
+        const SQL = await initSqlJs();
+        return new DatabaseManager(SQL);
+    }
+
+    constructor(SQL) {
         if (!fs.existsSync(DATA_DIR)) {
             fs.mkdirSync(DATA_DIR, { recursive: true });
         }
 
-        this.db = new Database(DB_PATH);
-        this.db.pragma('journal_mode = WAL');
-        this.db.pragma('foreign_keys = ON');
+        let data = null;
+        if (fs.existsSync(DB_PATH)) {
+            data = fs.readFileSync(DB_PATH);
+        }
+
+        this._rawDb = data
+            ? new SQL.Database(new Uint8Array(data))
+            : new SQL.Database();
+
+        try { this._rawDb.run('PRAGMA foreign_keys = ON'); } catch (e) {}
+
+        this._batching = true;
+        this.db = this._createDbProxy();
         this.init();
+        this._batching = false;
+        this._save();
+    }
+
+    _createDbProxy() {
+        const rawDb = this._rawDb;
+        const self = this;
+
+        return {
+            prepare(sql) {
+                return {
+                    get(...params) {
+                        const stmt = rawDb.prepare(sql);
+                        try {
+                            if (params.length > 0) stmt.bind(params);
+                            if (stmt.step()) {
+                                return stmt.getAsObject();
+                            }
+                            return null;
+                        } finally {
+                            stmt.free();
+                        }
+                    },
+                    all(...params) {
+                        const stmt = rawDb.prepare(sql);
+                        try {
+                            if (params.length > 0) stmt.bind(params);
+                            const results = [];
+                            while (stmt.step()) {
+                                results.push(stmt.getAsObject());
+                            }
+                            return results;
+                        } finally {
+                            stmt.free();
+                        }
+                    },
+                    run(...params) {
+                        if (params.length > 0) {
+                            rawDb.run(sql, params);
+                        } else {
+                            rawDb.run(sql);
+                        }
+                        const changes = rawDb.getRowsModified();
+                        let lastInsertRowid = 0;
+                        const res = rawDb.exec('SELECT last_insert_rowid() as id');
+                        if (res.length > 0 && res[0].values.length > 0) {
+                            lastInsertRowid = res[0].values[0][0];
+                        }
+                        if (!self._batching) self._save();
+                        return { changes, lastInsertRowid };
+                    },
+                };
+            },
+            exec(sql) {
+                rawDb.exec(sql);
+                if (!self._batching) self._save();
+            },
+            close() {
+                self._save();
+                rawDb.close();
+            },
+        };
+    }
+
+    _save() {
+        try {
+            const data = this._rawDb.export();
+            fs.writeFileSync(DB_PATH, Buffer.from(data));
+        } catch (e) {
+            console.error('Error saving database:', e.message);
+        }
     }
 
     init() {

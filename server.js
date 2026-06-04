@@ -1,9 +1,7 @@
 const express = require('express');
 const path = require('path');
-const net = require('net');
 const fs = require('fs');
 const QRCode = require('qrcode');
-const DatabaseManager = require('./src/database');
 
 const app = express();
 app.use(express.json());
@@ -34,8 +32,7 @@ function saveConfig(config) {
 
 const botModule = require('./src/bot');
 
-function createRouter(bot) {
-    const db = new DatabaseManager();
+function createRouter(bot, db) {
     const router = express.Router();
 
     const handle = (fn) => async (req, res) => {
@@ -240,20 +237,8 @@ function createRouter(bot) {
     return router;
 }
 
-function getRandomPort() {
-    return new Promise((resolve) => {
-        const server = net.createServer();
-        server.listen(0, () => {
-            const port = server.address().port;
-            server.close(() => resolve(port));
-        });
-        server.on('error', () => resolve(0));
-    });
-}
-
-async function startWebServer(bot) {
-    const port = await getRandomPort();
-    const apiRouter = createRouter(bot);
+async function startWebServer(bot, db) {
+    const apiRouter = createRouter(bot, db);
     app.use('/api', apiRouter);
 
     app.use((req, res) => {
@@ -261,11 +246,13 @@ async function startWebServer(bot) {
         res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
 
-    return new Promise((resolve) => {
-        app.listen(port, () => {
+    return new Promise((resolve, reject) => {
+        const server = app.listen(0, () => {
+            const port = server.address().port;
             console.log(`🌐 Dashboard web en: http://localhost:${port}`);
             resolve(port);
         });
+        server.on('error', reject);
     });
 }
 

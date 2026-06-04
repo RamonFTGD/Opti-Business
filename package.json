@@ -19,9 +19,9 @@
   "dependencies": {
     "@whiskeysockets/baileys": "^7.0.0-rc13",
     "axios": "^1.16.1",
-    "better-sqlite3": "^12.10.0",
+    "sql.js": "^1.11.0",
     "cloudflared": "^0.7.1",
-    "express": "^5.2.1",
+    "express": "^4.21.0",
     "inquirer": "^14.0.2",
     "mercadopago": "^3.1.0",
     "pino": "^10.3.1",
