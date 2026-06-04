@@ -15,7 +15,7 @@ async function startCloudflared(port) {
         const cloudflaredBin = require('cloudflared').bin || 'cloudflared';
 
         try {
-            const cf = spawn(cloudflaredBin, ['tunnel', '--url', `http://localhost:${port}`], {
+            const cf = spawn(cloudflaredBin, ['tunnel', '--url', `http://127.0.0.1:${port}`], {
                 stdio: ['pipe', 'pipe', 'pipe'],
                 detached: false,
             });
