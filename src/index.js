@@ -1,6 +1,7 @@
 const { startWebServer } = require('../server');
-const { spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
+const { Tunnel } = require('cloudflared');
 const BusinessMenu = require('./menu');
 const WhatsAppBot = require('./bot');
 const DatabaseManager = require('./database');
@@ -8,57 +9,50 @@ const DatabaseManager = require('./database');
 let tunnelUrl = null;
 let cloudflaredProcess = null;
 
+function getTunnelTimeout() {
+    try {
+        const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config.json'), 'utf8'));
+        return config.bot?.tunnel_timeout_ms || 15000;
+    } catch (e) {
+        return 15000;
+    }
+}
+
 async function startCloudflared(port) {
     return new Promise((resolve) => {
         console.log('🔗 Abriendo túnel Cloudflared...\n');
 
-        const cloudflaredBin = require('cloudflared').bin || 'cloudflared';
-
         try {
-            const cf = spawn(cloudflaredBin, ['tunnel', '--url', `http://127.0.0.1:${port}`], {
-                stdio: ['pipe', 'pipe', 'pipe'],
-                detached: false,
+            const tunnel = Tunnel.quick(`http://127.0.0.1:${port}`);
+
+            tunnel.once('url', (url) => {
+                tunnelUrl = url;
+                console.log(`\n🔗 Dashboard web disponible:`);
+                console.log(`   🌐 ${tunnelUrl}\n`);
+                resolve(tunnelUrl);
             });
 
-            const extractTunnelUrl = (output) => {
-                const urlMatch = output.match(/https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com/);
-                if (urlMatch && !tunnelUrl) {
-                    tunnelUrl = urlMatch[0];
-                    console.log(`\n🔗 Dashboard web disponible:`);
-                    console.log(`   🌐 ${tunnelUrl}\n`);
-                    resolve(tunnelUrl);
-                }
-            };
-
-            cf.stdout.on('data', (data) => {
-                extractTunnelUrl(data.toString());
+            tunnel.once('error', (err) => {
+                console.log(`\n⚠️  Error en túnel Cloudflared: ${err.message}`);
+                resolve(null);
             });
 
-            cf.stderr.on('data', (data) => {
-                extractTunnelUrl(data.toString());
-            });
-
-            cf.on('close', (code) => {
+            tunnel.once('exit', (code) => {
                 console.log(`\n⚠️  Túnel Cloudflared cerrado (código ${code})`);
                 tunnelUrl = null;
                 cloudflaredProcess = null;
                 resolve(null);
             });
 
-            cf.on('error', (err) => {
-                console.log(`\n⚠️  No se pudo iniciar Cloudflared: ${err.message}`);
-                console.log('   El dashboard sigue disponible en localhost');
-                resolve(null);
-            });
+            cloudflaredProcess = tunnel;
 
-            cloudflaredProcess = cf;
-
+            const timeout = getTunnelTimeout();
             setTimeout(() => {
                 if (!tunnelUrl) {
                     console.log('\n⚠️  Tiempo de espera del túnel agotado. El dashboard sigue en localhost.');
                     resolve(null);
                 }
-            }, 15000);
+            }, timeout);
         } catch (err) {
             console.log(`\n⚠️  Error iniciando Cloudflared: ${err.message}`);
             console.log('   El dashboard sigue disponible en localhost');
@@ -69,7 +63,7 @@ async function startCloudflared(port) {
 
 function cleanup() {
     if (cloudflaredProcess) {
-        try { cloudflaredProcess.kill(); } catch (e) {}
+        try { cloudflaredProcess.stop(); } catch (e) {}
         cloudflaredProcess = null;
     }
     process.exit(0);
