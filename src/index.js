@@ -24,34 +24,60 @@ async function startCloudflared(port) {
 
         try {
             const tunnel = Tunnel.quick(`http://127.0.0.1:${port}`);
+            cloudflaredProcess = tunnel;
 
-            tunnel.once('url', (url) => {
+            let urlReceived = null;
+            let connected = false;
+            let resolved = false;
+
+            const finalize = (url) => {
+                if (resolved) return;
+                resolved = true;
                 tunnelUrl = url;
                 console.log(`\n🔗 Dashboard web disponible:`);
                 console.log(`   🌐 ${tunnelUrl}\n`);
-                resolve(tunnelUrl);
+                resolve(url);
+            };
+
+            tunnel.once('url', (url) => {
+                urlReceived = url;
+                console.log(`   📡 URL del túnel obtenida, esperando conexión...`);
+                if (connected) {
+                    finalize(url);
+                }
+            });
+
+            tunnel.once('connected', () => {
+                connected = true;
+                if (urlReceived) {
+                    finalize(urlReceived);
+                }
             });
 
             tunnel.once('error', (err) => {
+                if (resolved) return;
                 console.log(`\n⚠️  Error en túnel Cloudflared: ${err.message}`);
                 resolve(null);
             });
 
             tunnel.once('exit', (code) => {
+                if (resolved) return;
                 console.log(`\n⚠️  Túnel Cloudflared cerrado (código ${code})`);
                 tunnelUrl = null;
                 cloudflaredProcess = null;
                 resolve(null);
             });
 
-            cloudflaredProcess = tunnel;
-
             const timeout = getTunnelTimeout();
             setTimeout(() => {
-                if (!tunnelUrl) {
-                    console.log('\n⚠️  Tiempo de espera del túnel agotado. El dashboard sigue en localhost.');
-                    resolve(null);
+                if (resolved) return;
+                if (urlReceived) {
+                    console.log('\n⚠️  Conexión del túnel no confirmada, mostrando URL de todos modos...');
+                    finalize(urlReceived);
+                    return;
                 }
+                console.log('\n⚠️  Tiempo de espera del túnel agotado. El dashboard sigue en localhost.');
+                resolve(null);
             }, timeout);
         } catch (err) {
             console.log(`\n⚠️  Error iniciando Cloudflared: ${err.message}`);
