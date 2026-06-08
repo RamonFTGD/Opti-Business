@@ -1,7 +1,6 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, isLidUser, isPnUser } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const path = require('path');
-const QRCode = require('qrcode');
 const MessageFormatter = require('./messages');
 const PaymentManager = require('./payments');
 
@@ -215,8 +214,6 @@ class WhatsAppBot {
                     addLog('qr', 'Código QR generado — escanea con WhatsApp Web');
                     if (onStatusChange) onStatusChange('qr', qr);
                     if (this._statusChangeCallback) this._statusChangeCallback('qr', qr);
-                    // Mostrar QR como ASCII art en la terminal
-                    this._printQRToTerminal(qr);
                 }
 
                 if (connection === 'close') {
@@ -305,10 +302,7 @@ class WhatsAppBot {
         addLog('status', 'Bot detenido manualmente');
     }
 
-    _printQRToTerminal(qrText) {
-        // No se renderiza QR en terminal
-        // El QR está disponible en el dashboard web via /api/connection/qr-image
-    }
+
 
     extractPhone(jid) {
         return jid.split(':')[0].replace(/@s\.whatsapp\.net$/, '').replace(/@lid$/, '');
