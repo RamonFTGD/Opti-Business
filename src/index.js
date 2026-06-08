@@ -1,96 +1,142 @@
 const { startWebServer } = require('../server');
 const fs = require('fs');
 const path = require('path');
-const { Tunnel } = require('cloudflared');
+const { spawn } = require('child_process');
+const readline = require('readline');
 const BusinessMenu = require('./menu');
 const WhatsAppBot = require('./bot');
 const DatabaseManager = require('./database');
 
 let tunnelUrl = null;
-let cloudflaredProcess = null;
+let tunnelProcess = null;
 
-function getTunnelTimeout() {
-    try {
-        const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config.json'), 'utf8'));
-        return config.bot?.tunnel_timeout_ms || 15000;
-    } catch (e) {
-        return 15000;
-    }
+const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
+
+function loadConfig() {
+    try { return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')); }
+    catch (e) { return {}; }
 }
 
-async function startCloudflared(port) {
+function saveConfig(config) {
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
+}
+
+async function askForApiKey() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
     return new Promise((resolve) => {
-        console.log('🔗 Abriendo túnel Cloudflared...\n');
+        rl.question('\n🔑 Ingresa tu API Key de OptiShield: ', (answer) => {
+            rl.close();
+            resolve(answer.trim());
+        });
+    });
+}
 
-        try {
-            const tunnel = Tunnel.quick(`http://127.0.0.1:${port}`);
-            cloudflaredProcess = tunnel;
+async function startOptiShieldTunnel(port) {
+    const config = loadConfig();
+    
+    // Inicializar sección optishield si no existe
+    if (!config.optishield) config.optishield = {};
 
-            let urlReceived = null;
-            let connected = false;
-            let resolved = false;
+    let apikey = config.optishield.apikey;
 
-            const finalize = (url) => {
-                if (resolved) return;
-                resolved = true;
-                tunnelUrl = url;
-                console.log(`\n🔗 Dashboard web disponible:`);
-                console.log(`   🌐 ${tunnelUrl}\n`);
-                resolve(url);
-            };
-
-            tunnel.once('url', (url) => {
-                urlReceived = url;
-                console.log(`   📡 URL del túnel obtenida, esperando conexión...`);
-                if (connected) {
-                    finalize(url);
-                }
-            });
-
-            tunnel.once('connected', () => {
-                connected = true;
-                if (urlReceived) {
-                    finalize(urlReceived);
-                }
-            });
-
-            tunnel.once('error', (err) => {
-                if (resolved) return;
-                console.log(`\n⚠️  Error en túnel Cloudflared: ${err.message}`);
-                resolve(null);
-            });
-
-            tunnel.once('exit', (code) => {
-                if (resolved) return;
-                console.log(`\n⚠️  Túnel Cloudflared cerrado (código ${code})`);
-                tunnelUrl = null;
-                cloudflaredProcess = null;
-                resolve(null);
-            });
-
-            const timeout = getTunnelTimeout();
-            setTimeout(() => {
-                if (resolved) return;
-                if (urlReceived) {
-                    console.log('\n⚠️  Conexión del túnel no confirmada, mostrando URL de todos modos...');
-                    finalize(urlReceived);
-                    return;
-                }
-                console.log('\n⚠️  Tiempo de espera del túnel agotado. El dashboard sigue en localhost.');
-                resolve(null);
-            }, timeout);
-        } catch (err) {
-            console.log(`\n⚠️  Error iniciando Cloudflared: ${err.message}`);
-            console.log('   El dashboard sigue disponible en localhost');
-            resolve(null);
+    // Si no hay API key, pedirla al usuario
+    if (!apikey) {
+        console.log('\n⚠️  No se encontró API Key de OptiShield en config.json');
+        console.log('   Para exponer el dashboard al mundo exterior, necesitas una API Key.');
+        console.log('   Obtén una en: https://optishield.uk\n');
+        
+        apikey = await askForApiKey();
+        
+        if (!apikey) {
+            console.log('\n⚠️  No se ingresó API Key. El dashboard solo estará disponible en localhost.\n');
+            return null;
         }
+
+        // Guardar en config.json
+        config.optishield.apikey = apikey;
+        saveConfig(config);
+        console.log('✅ API Key guardada en config.json\n');
+    }
+
+    console.log(`🔗 Abriendo túnel OptiShield...`);
+    console.log(`   Exponiendo http://localhost:${port}\n`);
+
+    const tunnelScript = path.join(__dirname, '..', 'tunnel-client.js');
+    
+    if (!fs.existsSync(tunnelScript)) {
+        console.log('⚠️  tunnel-client.js no encontrado. El dashboard solo estará en localhost.');
+        return null;
+    }
+
+    return new Promise((resolve) => {
+        let urlResolved = false;
+        let buffer = '';
+
+        tunnelProcess = spawn('node', [tunnelScript, '--port', String(port), '--apikey', apikey], {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            cwd: path.join(__dirname, '..'),
+        });
+
+        tunnelProcess.stdout.on('data', (data) => {
+            const text = data.toString();
+            buffer += text;
+            process.stdout.write(text);
+
+            // Buscar la URL del túnel en la salida
+            const urlMatch = buffer.match(/https:\/\/[^\s]+\/web\/[a-zA-Z0-9_-]+/);
+            if (urlMatch && !urlResolved) {
+                urlResolved = true;
+                tunnelUrl = urlMatch[0];
+                resolve(urlMatch[0]);
+            }
+        });
+
+        tunnelProcess.stderr.on('data', (data) => {
+            process.stderr.write(data);
+        });
+
+        tunnelProcess.on('close', (code) => {
+            tunnelProcess = null;
+            if (!urlResolved) {
+                console.log('\n⚠️  El túnel se cerró inesperadamente.');
+                resolve(null);
+            }
+        });
+
+        tunnelProcess.on('error', (err) => {
+            tunnelProcess = null;
+            console.log(`\n⚠️  Error iniciando túnel: ${err.message}`);
+            resolve(null);
+        });
+
+        // Timeout por si no se obtiene URL
+        setTimeout(() => {
+            if (!urlResolved) {
+                if (buffer) {
+                    // Revisar si ya tenemos la URL en el buffer
+                    const match = buffer.match(/https:\/\/[^\s]+\/web\/[a-zA-Z0-9_-]+/);
+                    if (match) {
+                        urlResolved = true;
+                        tunnelUrl = match[0];
+                        resolve(match[0]);
+                        return;
+                    }
+                }
+                console.log('\n⚠️  Tiempo de espera del túnel agotado.');
+                resolve(null);
+            }
+        }, 20000);
     });
 }
 
 function cleanup() {
-    if (cloudflaredProcess) {
-        try { cloudflaredProcess.stop(); } catch (e) {}
-        cloudflaredProcess = null;
+    if (tunnelProcess) {
+        try { tunnelProcess.kill(); } catch (e) {}
+        tunnelProcess = null;
     }
     process.exit(0);
 }
@@ -131,7 +177,7 @@ async function main() {
         console.log('⚠️  El bot se reiniciará automáticamente. El dashboard web sigue disponible.');
     });
 
-    startCloudflared(port);
+    const tunnelResult = await startOptiShieldTunnel(port);
 
     const menu = new BusinessMenu(db, bot);
 
@@ -144,6 +190,8 @@ async function main() {
             : `║  🌐 http://localhost:${String(port).padEnd(38)}║`;
         return `${base}\n${urlLine}\n║  ${botStatus.padEnd(46)}║`;
     };
+
+    console.log('');
 
     process.on('SIGINT', cleanup);
     process.on('SIGTERM', cleanup);
