@@ -177,7 +177,7 @@ async function main() {
         console.log('⚠️  El bot se reiniciará automáticamente. El dashboard web sigue disponible.');
     });
 
-    const tunnelResult = await startOptiShieldTunnel(port);
+    await startOptiShieldTunnel(port);
 
     const menu = new BusinessMenu(db, bot);
 
