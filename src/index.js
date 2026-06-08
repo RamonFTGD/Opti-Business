@@ -101,7 +101,7 @@ async function startOptiShieldTunnel(port) {
         tunnelProcess.on('close', (code) => {
             tunnelProcess = null;
             if (!urlResolved) {
-                console.log('\n⚠️  El túnel se cerró inesperadamente.');
+                // El túnel no está disponible (API key sin permisos, etc.), pero el bot sigue funcionando
                 resolve(null);
             }
         });

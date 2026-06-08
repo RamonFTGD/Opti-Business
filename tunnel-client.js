@@ -371,8 +371,15 @@ async function main() {
     process.on('SIGTERM', cleanup)
 
   } catch (e) {
-    console.error(`\n❌ Error: ${e.message}`)
-    process.exit(1)
+    const msg = e.message
+    if (msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('invalida') || msg.toLowerCase().includes('invalid')) {
+      console.log(`\n⚠️  El túnel OptiShield requiere una clave con permisos de túnel.`)
+      console.log(`   El bot seguirá funcionando en localhost.\n`)
+    } else {
+      console.log(`\n⚠️  Túnel no disponible: ${msg}`)
+      console.log(`   El bot seguirá funcionando en localhost.\n`)
+    }
+    process.exit(0)
   }
 }
 
