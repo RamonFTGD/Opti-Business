@@ -6,3 +6,6 @@ yarn-error.log*
 dist/
 build/
 auth_info_baileys/
+data/business.db
+config.json
+auth_info_baileys/
