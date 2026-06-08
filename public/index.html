@@ -141,7 +141,7 @@ hr{border:none;border-top:1px solid var(--border)}
 <div class="toast" id="toast"></div>
 
 <script>
-var API = '/api';
+var API = 'api';
 
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function sym(cur) { var s = { USD: '$', MXN: '$', EUR: '€', ARS: '$', COP: '$', BRL: 'R$' }; return s[cur] || '$'; }
@@ -536,7 +536,7 @@ async function showConnection(main) {
         '<div style="font-size:16px;font-weight:700;margin-bottom:4px" id="connLabel">' + getStatusLabel(status.status) + '</div>' +
         '<div style="font-size:13px;color:var(--text-secondary)" id="connDetail">' + getStatusDetail(status.status, status.phone) + '</div></div>' +
         '<div id="qrContainer" style="text-align:center;padding:20px;' + (status.status === 'qr' ? '' : 'display:none') + '">' +
-        '<div id="qrImage"><img src="/api/connection/qr-image?t=' + Date.now() + '" style="width:240px;height:240px;border-radius:var(--radius);border:1px solid var(--border)" alt="QR"></div>' +
+        '<div id="qrImage"><img src="api/connection/qr-image?t=' + Date.now() + '" style="width:240px;height:240px;border-radius:var(--radius);border:1px solid var(--border)" alt="QR"></div>' +
         '<p style="margin-top:12px;font-size:13px;color:var(--warning)">Escanea este código QR con WhatsApp</p>' +
         '<p style="font-size:12px;color:var(--text-tertiary)">WhatsApp → Menú → Dispositivos vinculados → Vincular dispositivo</p></div></div>' +
         '<div class="card"><div class="card-header"><h3>Pairing por número</h3></div>' +
@@ -664,7 +664,7 @@ async function showTerminal(main) {
         '<div class="stat-card"><div class="value">'+(s.messagesReceived||0)+'</div><div class="label">Recibidos</div></div>' +
         '<div class="stat-card"><div class="value">'+(s.messagesSent||0)+'</div><div class="label">Enviados</div></div>' +
         '<div class="stat-card"><div class="value">'+(s.reconnects||0)+'</div><div class="label">Reconexiones</div></div></div>';
-    _terminalSSE = new EventSource('/api/logs/stream');
+    _terminalSSE = new EventSource('api/logs/stream');
     _terminalSSE.onmessage = function(e) {
         try { var entry=JSON.parse(e.data); if(entry.type==='connected')return; var output=document.getElementById('terminalOutput'); if(output){output.innerHTML+=formatLogLine(entry);output.scrollTop=output.scrollHeight;} } catch(err){}
     };
