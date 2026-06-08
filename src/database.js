@@ -255,6 +255,35 @@ class DatabaseManager {
         insertSetting.run('owner_phone', biz.owner_phone || '');
         insertSetting.run('owner_number', biz.owner_number || '');
 
+        // ⚠️ IMPORTANTE: Los INSERT OR IGNORE no sobrescriben valores existentes.
+        // Para que config.json siempre prevalezca, hacemos UPDATE después.
+        const updateSetting = this.db.prepare('UPDATE settings SET value = ? WHERE key = ?');
+
+        const configOverrides = {
+            'business_name': biz.name,
+            'currency': biz.currency,
+            'welcome_message': msgs.welcome_message,
+            'catalog_message': msgs.catalog_message,
+            'order_confirmation': msgs.order_confirmation,
+            'order_status_pending': msgs.order_status_pending,
+            'order_status_confirmed': msgs.order_status_confirmed,
+            'order_status_completed': msgs.order_status_completed,
+            'order_status_cancelled': msgs.order_status_cancelled,
+            'help_message': msgs.help_message,
+            'greeting_no_products': msgs.greeting_no_products,
+            'payment_instructions': msgs.payment_instructions,
+            'owner_name': biz.owner_name,
+            'owner_email': biz.owner_email,
+            'owner_phone': biz.owner_phone,
+            'owner_number': biz.owner_number,
+        };
+
+        for (const [key, value] of Object.entries(configOverrides)) {
+            if (value) {
+                updateSetting.run(value, key);
+            }
+        }
+
         const count = this.db.prepare('SELECT COUNT(*) as count FROM products').get();
         if (count.count === 0) {
             const insertProduct = this.db.prepare(
