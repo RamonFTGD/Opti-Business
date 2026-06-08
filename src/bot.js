@@ -306,14 +306,8 @@ class WhatsAppBot {
     }
 
     _printQRToTerminal(qrText) {
-        // QR compacto en terminal como referencia rápida
-        QRCode.toString(qrText, { type: 'terminal', small: true }, (err, qrAscii) => {
-            if (!err) {
-                console.log('');
-                console.log('📱 QR disponible — escanea desde el dashboard web');
-                console.log(qrAscii);
-            }
-        });
+        // No se renderiza QR en terminal
+        // El QR está disponible en el dashboard web via /api/connection/qr-image
     }
 
     extractPhone(jid) {
