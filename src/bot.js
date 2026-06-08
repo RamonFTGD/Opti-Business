@@ -139,9 +139,6 @@ class WhatsAppBot {
             }
         });
 
-        // Mostrar el código de pairing como QR en la terminal
-        this._printQRToTerminal(code);
-
         const formatted = `${code}`.match(/.{1,4}/g).join('-');
         return formatted;
     }
