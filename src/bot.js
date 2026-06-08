@@ -306,15 +306,12 @@ class WhatsAppBot {
     }
 
     _printQRToTerminal(qrText) {
-        // Renderiza el QR como ASCII art en la terminal
-        QRCode.toString(qrText, { type: 'terminal', small: false }, (err, qrAscii) => {
+        // QR compacto en terminal como referencia rápida
+        QRCode.toString(qrText, { type: 'terminal', small: true }, (err, qrAscii) => {
             if (!err) {
                 console.log('');
-                console.log('╔══════════════════════════════════════════╗');
-                console.log('║   📱 ESCANEA ESTE QR CON WHATSAPP WEB    ║');
-                console.log('╚══════════════════════════════════════════╝');
+                console.log('📱 QR disponible — escanea desde el dashboard web');
                 console.log(qrAscii);
-                console.log('');
             }
         });
     }
