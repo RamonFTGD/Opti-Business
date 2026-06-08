@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const readline = require('readline');
-const BusinessMenu = require('./menu');
 const WhatsAppBot = require('./bot');
 const DatabaseManager = require('./database');
 
@@ -179,28 +178,20 @@ async function main() {
 
     await startOptiShieldTunnel(port);
 
-    const menu = new BusinessMenu(db, bot);
-
-    const origGetHeader = menu.getHeader.bind(menu);
-    menu.getHeader = () => {
-        const base = origGetHeader();
-        const botStatus = bot.isRunning ? '✅ WhatsApp Conectado' : '📱 QR pendiente';
-        const urlLine = tunnelUrl
-            ? `║  🌐 ${tunnelUrl.slice(0, 45).padEnd(39)}║`
-            : `║  🌐 http://localhost:${String(port).padEnd(38)}║`;
-        return `${base}\n${urlLine}\n║  ${botStatus.padEnd(46)}║`;
-    };
-
+    console.log('');
+    if (tunnelUrl) {
+        console.log(`🌐 Dashboard público: ${tunnelUrl}`);
+    } else {
+        console.log(`🌐 Dashboard local: http://localhost:${port}`);
+    }
+    console.log('📋 Mostrando logs en tiempo real. Presiona Ctrl+C para salir.');
     console.log('');
 
     process.on('SIGINT', cleanup);
     process.on('SIGTERM', cleanup);
 
-    menu.start().catch((err) => {
-        if (err.name === 'ExitPromptError') return;
-        console.error('Error fatal:', err);
-        cleanup();
-    });
+    // Mantener el proceso vivo — solo logs en la terminal
+    await new Promise(() => {});
 }
 
 main();

@@ -223,8 +223,8 @@ function createRouter(bot, db) {
             const status = bot.getConnectionStatus();
             if (!status.qr) return res.status(404).json({ error: 'No QR disponible' });
             const qrPng = await QRCode.toBuffer(status.qr, {
-                width: 300,
-                margin: 2,
+                width: 600,
+                margin: 3,
                 color: { dark: '#FFFFFF', light: '#1a1a2e' },
             });
             res.type('image/png').send(qrPng);
