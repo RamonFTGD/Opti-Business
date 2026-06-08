@@ -1,6 +1,7 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, isLidUser, isPnUser } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const path = require('path');
+const QRCode = require('qrcode');
 const MessageFormatter = require('./messages');
 const PaymentManager = require('./payments');
 
@@ -138,6 +139,9 @@ class WhatsAppBot {
             }
         });
 
+        // Mostrar el código de pairing como QR en la terminal
+        this._printQRToTerminal(code);
+
         const formatted = `${code}`.match(/.{1,4}/g).join('-');
         return formatted;
     }
@@ -214,6 +218,8 @@ class WhatsAppBot {
                     addLog('qr', 'Código QR generado — escanea con WhatsApp Web');
                     if (onStatusChange) onStatusChange('qr', qr);
                     if (this._statusChangeCallback) this._statusChangeCallback('qr', qr);
+                    // Mostrar QR como ASCII art en la terminal
+                    this._printQRToTerminal(qr);
                 }
 
                 if (connection === 'close') {
@@ -300,6 +306,20 @@ class WhatsAppBot {
         this._destroySocket();
         this.isRunning = false;
         addLog('status', 'Bot detenido manualmente');
+    }
+
+    _printQRToTerminal(qrText) {
+        // Renderiza el QR como ASCII art en la terminal
+        QRCode.toString(qrText, { type: 'terminal', small: false }, (err, qrAscii) => {
+            if (!err) {
+                console.log('');
+                console.log('╔══════════════════════════════════════════╗');
+                console.log('║   📱 ESCANEA ESTE QR CON WHATSAPP WEB    ║');
+                console.log('╚══════════════════════════════════════════╝');
+                console.log(qrAscii);
+                console.log('');
+            }
+        });
     }
 
     extractPhone(jid) {

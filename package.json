@@ -19,13 +19,13 @@
   "dependencies": {
     "@whiskeysockets/baileys": "^7.0.0-rc13",
     "axios": "^1.16.1",
-    "sql.js": "^1.11.0",
     "express": "^4.21.0",
     "inquirer": "^14.0.2",
-    "ws": "^8.0.0",
     "mercadopago": "^3.1.0",
     "pino": "^10.3.1",
     "qrcode": "^1.5.4",
-    "stripe": "^22.2.0"
+    "sql.js": "^1.11.0",
+    "stripe": "^22.2.0",
+    "ws": "^8.0.0"
   }
 }
