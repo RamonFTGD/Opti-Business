@@ -9,3 +9,6 @@ auth_info_baileys/
 data/business.db
 config.json
 auth_info_baileys/
+
+# Token de GitHub para auto-update
+.token
